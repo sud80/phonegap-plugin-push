@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
+import me.leolin.shortcutbadger.ShortcutBadger;
 
 public class PushPlugin extends CordovaPlugin implements PushConstants {
 
@@ -153,6 +154,21 @@ public class PushPlugin extends CordovaPlugin implements PushConstants {
             });
         } else if (FINISH.equals(action)) {
             callbackContext.success();
+        } else if (GET_APPLICATION_ICON_BADGE_NUMBER.equals(action)) {
+            int count = ShortcutBadgerUtils.getBadgeCount(getApplicationContext());
+            callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.OK, count));
+        } else if (SET_APPLICATION_ICON_BADGE_NUMBER.equals(action)) {
+            try {
+                int count = data.getJSONObject(0).getInt(BADGE);
+                boolean status = ShortcutBadgerUtils.setBadgeCount(getApplicationContext(), count);
+                if (status) {
+                    callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.OK));
+                } else {
+                    callbackContext.error("Unable to set the icon badge number");
+                }
+            } catch(JSONException ex) {
+                callbackContext.error("First arg should be an integer representing badge count");
+            }
         } else {
             Log.e(LOG_TAG, "Invalid action : " + action);
             callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.INVALID_ACTION));
@@ -241,7 +257,7 @@ public class PushPlugin extends CordovaPlugin implements PushConstants {
             while (it.hasNext()) {
                 String key = it.next();
                 Object value = extras.get(key);
-                 
+
                 Log.d(LOG_TAG, "key = " + key);
 
                 if (jsonKeySet.contains(key)) {
@@ -266,7 +282,7 @@ public class PushPlugin extends CordovaPlugin implements PushConstants {
                         }
                         else {
                             additionalData.put(key, value);
-                        }                       
+                        }
                     } catch (Exception e) {
                         additionalData.put(key, value);
                     }
