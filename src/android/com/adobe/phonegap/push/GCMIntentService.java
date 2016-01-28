@@ -65,6 +65,9 @@ public class GCMIntentService extends GcmListenerService implements PushConstant
 
             extras = normalizeExtras(extras);
 
+            // update badge count
+            setBadgeCount(extras);
+
             // if we are in the foreground and forceShow is `false` only send data
             if (!forceShow && PushPlugin.isInForeground()) {
                 Log.d(LOG_TAG, "foreground");
@@ -151,7 +154,8 @@ public class GCMIntentService extends GcmListenerService implements PushConstant
                     try {
                         // If object contains message keys promote each value to the root of the bundle
                         JSONObject data = new JSONObject((String) json);
-                        if ( data.has(ALERT) || data.has(MESSAGE) || data.has(BODY) || data.has(TITLE) ) {
+                        if ( data.has(ALERT) || data.has(MESSAGE) || data.has(BODY) || data.has(TITLE) ||
+                             data.has(COUNT) || data.has(MSGCNT) || data.has(BADGE) || data.has(CONTENT_AVAILABLE)) {
                             Iterator<String> jsonIter = data.keys();
                             while (jsonIter.hasNext()) {
                                 String jsonKey = jsonIter.next();
@@ -352,13 +356,18 @@ public class GCMIntentService extends GcmListenerService implements PushConstant
     }
 
     private void setNotificationCount(Bundle extras, NotificationCompat.Builder mBuilder) {
-        String msgcnt = extras.getString(MSGCNT);
-        if (msgcnt == null) {
-            msgcnt = extras.getString(BADGE);
+        String count = extras.getString(COUNT);
+        if (count != null) {
+            mBuilder.setNumber(Integer.parseInt(count));
         }
-        if (msgcnt != null) {
-            mBuilder.setNumber(Integer.parseInt(msgcnt));
+    }
+
+    private void setBadgeCount(Bundle extras) {
+        String count = extras.getString(COUNT);
+        if (count != null) {
+            ShortcutBadgerUtils.setBadgeCount(getApplicationContext(), Integer.parseInt(count));
         }
+
     }
 
     private void setNotificationVibration(Bundle extras, Boolean vibrateOption, NotificationCompat.Builder mBuilder) {
